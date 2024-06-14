@@ -1,11 +1,13 @@
-## Dev
+# Products Launcher
+
+## Cómo levantar el proyecto en desarrollo
 
 1. Clonar el repositorio
 2. Crear un .env basado en el .env.template
 3. Ejecutar el comando `git submodule update --init --recursive`
 4. Ejecutar el comando `docker compose up --build`
 
-### Pasos para crear los Git Submodules
+## Pasos para crear los Git Submodules
 
 1. Crear un nuevo repositorio en GitHub
 2. Clonar el repositorio en la máquina local
@@ -24,7 +26,7 @@ git commit -m "Add submodule"
 git push
 ```
 
-### Inicializar y actualizar Sub-módulos
+## Inicializar y actualizar Sub-módulos
 
 Cuando alguien clona el repositorio por primera vez, debe de ejecutar el siguiente comando para inicializar y actualizar los sub-módulos
 
@@ -44,8 +46,43 @@ Si se trabaja en el repositorio que tiene los sub-módulos, **primero actualizar
 
 Si se hace al revés, se perderán las referencias de los sub-módulos en el repositorio principal y tendremos que resolver conflictos.
 
-## Ejecutar docker compose para producción
+## Cómo construir imágenes de docker para producción
+
+1. Se necesita que cada microservicio tenga un archivo `dockerfile.prod` configurado previamente.
+
+2. Luego es necesario configurar un archivo `docker-compose.prod.yml` como se muestra a continuación:
+
+```
+services:
+  nats-server:
+    image: nats:latest
+    ports:
+      - "8222:8222"
+
+  client-gateway:
+    build:
+      context: ./client-gateway
+      dockerfile: dockerfile.prod
+    image: client-gateway-prod
+    ports:
+      - 3000:3000
+    environment:
+      - PORT=3000
+      - NATS_SERVERS=nats://nats-server:4222
+```
+
+Es importante indicar la carpeta que en este caso es `./client-gateway` y luego el dockerfile que será `dockerfile.prod`
+
+3. Seguidamente ejecutamos el siguiente comando estando ubicados donde se encuentra el archivo `docker-compose.prod.yml`
 
 ```
 docker compose -f docker-compose.prod.yml build
+```
+
+**-f** Indica que el archivo a tomar será `docker-compose.prod.yml`
+
+4. Una vez que se construye la imagen podemos usar el siguiente comando para levantar la red de contenedores
+
+```
+docker compose -f docker-compose.prod.yml up
 ```
